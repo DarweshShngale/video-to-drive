@@ -1,4 +1,4 @@
-name: Deploy to Heroku
+name: Deploy to Heroku using OAuth
 
 on:
   push:
@@ -23,16 +23,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Login to Heroku
+      - name: Login to Heroku using OAuth
         env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_CLIENT_ID: ${{ secrets.HEROKU_CLIENT_ID }}
+          HEROKU_CLIENT_SECRET: ${{ secrets.HEROKU_CLIENT_SECRET }}
         run: |
-          echo "machine api.heroku.com" > ~/.netrc
-          echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
-          echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
-          echo "machine git.heroku.com" >> ~/.netrc
-          echo "  login ${{ secrets.HEROKU_EMAIL }}" >> ~/.netrc
-          echo "  password ${{ secrets.HEROKU_API_KEY }}" >> ~/.netrc
+          # استخدام بيانات OAuth لتسجيل الدخول
+          curl -n -X POST https://id.heroku.com/oauth/token \
+          -d "grant_type=client_credentials" \
+          -d "client_id=${{ secrets.HEROKU_CLIENT_ID }}" \
+          -d "client_secret=${{ secrets.HEROKU_CLIENT_SECRET }}" \
+          -d "scope=global"
+          echo "Logged in with OAuth!"
 
       - name: Deploy to Heroku
         run: git push https://git.heroku.com/<heroku-app-name>.git master
